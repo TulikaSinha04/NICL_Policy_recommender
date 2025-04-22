@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>NICL Policy Recommender</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Bootstrap CSS & Icons -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+
+    <!-- Custom Styling -->
+    <style>
+      .badge:hover {
+        background-color: #e0a800;
+        cursor: pointer;
+      }
+      body {
+        background-color: #f8f9fa;
+      }
+      .section-box {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      }
+      .keyword-badge {
+        transition: background-color 0.3s ease;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Header with Logo -->
+    <div class="text-center py-3">
+      <img
+        src="https://www.addressguru.in/images/1603776603.png"
+        alt="NICL Logo"
+        style="height: 100px"
+      />
+      <h2 class="mt-3 text-primary fw-bold">NICL Policy Recommender</h2>
+      <p class="text-muted">
+        Find the best insurance policies with smart keyword matching
+      </p>
+    </div>
+
+    <div class="container mb-5">
+      <!-- Most Searched Keywords -->
+      {% if top_keywords %}
+      <div class="section-box mb-4">
+        <h5 class="text-warning mb-3">
+          <i class="bi bi-fire"></i> Most Searched Keywords
+        </h5>
+        <div class="d-flex flex-wrap gap-2">
+          {% for kw in top_keywords %}
+          <span
+            class="badge rounded-pill bg-warning text-dark px-3 py-2 fs-6 keyword-badge search-keyword"
+            data-keyword="{{ kw }}"
+          >
+            🔍 {{ kw }}
+          </span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Search Form -->
+      <div class="section-box mb-4">
+        <form method="post" onsubmit="return validateForm()">
+          <div class="mb-3">
+            <input
+              type="text"
+              name="keywords"
+              class="form-control form-control-lg"
+              placeholder="Enter keywords (e.g. health, accident, travel)"
+              required
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Select Categories:</label>
+            <div class="row">
+              {% for category in [ "Health Insurance", "Motor Insurance",
+              "Travel Insurance", "Fire Insurance", "Personal Accident Insurance", "Miscellaneous Insurance", "Aviation Insurance",
+              "Engineering Insurance", "Liability Insurance", "Marine Insurance", "Employee Compensation Insurance", "Crop Insurance",
+              "Rural Insurance" ] %}
+              <div class="col-md-4 col-sm-6">
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="categories"
+                    value="{{ category }}"
+                  />
+                  <label class="form-check-label">{{ category }}</label>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg mt-2">
+            <i class="bi bi-search"></i> Search
+          </button>
+        </form>
+      </div>
+
+      <!-- No Matches -->
+      {% if results.no_matches %}
+      <div class="alert alert-danger mt-4">
+        ❌ No matching policies found for your input. Try using broader keywords
+        like <strong>health</strong>, <strong>accident</strong>, or
+        <strong>travel</strong>.
+      </div>
+      {% endif %}
+
+      <!-- Best Matches -->
+      {% if results.best_matches %}
+      <div class="section-box mt-5">
+        <h4 class="text-success">
+          <i class="bi bi-check-circle-fill"></i> Best Matching Policies:
+        </h4>
+        <ul class="list-group mt-3">
+          {% for policy in results.best_matches %}
+          <li class="list-group-item">
+            <h5>{{ policy.name }}</h5>
+            <p>{{ policy.highlighted_description | safe }}</p>
+
+            <div class="d-flex flex-wrap align-items-center gap-2">
+              <a
+                href="{{ policy.link }}"
+                class="btn btn-sm btn-outline-primary"
+                target="_blank"
+              >
+                🔗 More Info
+              </a>
+
+              {% if policy.terms %}
+              <a
+                href="{{ policy.terms }}"
+                class="btn btn-sm btn-outline-warning"
+                target="_blank"
+              >
+                📄 View Terms & Conditions
+              </a>
+              {% endif %} {% if policy.additional_benefits %}
+              <!-- Additional Benefit as Button -->
+              <a
+                href="{{ policy.additional_benefits }}"
+                class="btn btn-sm btn-outline-success"
+                target="_blank"
+              >
+                🌟 Add-On
+              </a>
+              {% endif %}
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- Suggestions -->
+      {% if results.suggestions %}
+      <div class="section-box mt-5">
+        <h5 class="text-secondary">
+          <i class="bi bi-lightbulb"></i> You might also consider:
+        </h5>
+        <ul class="list-group mt-3">
+          {% for policy in results.suggestions %}
+          <li class="list-group-item">
+            <h6>{{ policy.name }}</h6>
+            <p>{{ policy.highlighted_description | safe }}</p>
+
+            <div class="d-flex flex-wrap align-items-center gap-2">
+              <a
+                href="{{ policy.link }}"
+                class="btn btn-sm btn-outline-secondary"
+                target="_blank"
+              >
+                🔗 More Info
+              </a>
+
+              {% if policy.terms %}
+              <a
+                href="{{ policy.terms }}"
+                class="btn btn-sm btn-outline-warning"
+                target="_blank"
+              >
+                📄 View Terms & Conditions
+              </a>
+              {% endif %} {% if policy.additional_benefits %}
+              <!-- Additional Benefit as Button -->
+              <a
+                href="{{ policy.additional_benefits }}"
+                class="btn btn-sm btn-outline-info"
+                target="_blank"
+              >
+                🌟 Add-On
+              </a>
+              {% endif %}
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      function validateForm() {
+        const checkboxes = document.querySelectorAll(
+          'input[name="categories"]'
+        );
+        const oneChecked = Array.from(checkboxes).some((cb) => cb.checked);
+        if (!oneChecked) {
+          alert("Please select at least one category.");
+          return false;
+        }
+        return true;
+      }
+
+      document.querySelectorAll(".search-keyword").forEach(function (badge) {
+        badge.addEventListener("click", function () {
+          const keyword = badge.getAttribute("data-keyword");
+          document.querySelector('input[name="keywords"]').value = keyword;
+          document.querySelector("form").submit();
+        });
+      });
+    </script>
+  </body>
+</html>
